@@ -1,0 +1,5 @@
+# Datos locales de Postgres (volumen bind)
+data/
+.env
+/api
+*.exe
