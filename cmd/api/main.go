@@ -32,8 +32,12 @@ func main() {
 	}
 	defer pool.Close()
 
-	embedder := embeddings.NewOllamaClient(cfg.OllamaURL, cfg.EmbeddingModel)
-	profileHandler := handlers.NewProfileHandler(repository.NewProfileRepository(pool), embedder, cfg.RequestTimeout)
+	if cfg.OpenAIAPIKey == "" {
+		slog.Error("OPENAI_API_KEY is required")
+		os.Exit(1)
+	}
+	embedder := embeddings.NewOpenAIClient(cfg.OpenAIEmbeddingsURL, cfg.OpenAIAPIKey, cfg.EmbeddingModel, cfg.EmbeddingDimensions)
+	matchHandler := handlers.NewMatchHandler(repository.NewPersonRepository(pool), embedder, cfg.RequestTimeout)
 
 	app := fiber.New(fiber.Config{AppName: "QueSosDeGasti API"})
 	app.Use(recover.New())
@@ -52,8 +56,7 @@ func main() {
 	})
 
 	api := app.Group("/api")
-	api.Post("/profiles", profileHandler.CreateProfile)
-	api.Post("/test/match", profileHandler.Match)
+	api.Post("/test/match", matchHandler.Match)
 
 	go func() {
 		<-ctx.Done()

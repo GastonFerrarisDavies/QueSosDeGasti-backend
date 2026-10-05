@@ -1,0 +1,42 @@
+[
+  {
+    "name": "Nacho",
+    "description": "Un amigo que conozco hace relativamente poco pero que se ganó un lugar esencial en mi vida. Apodado 'el mandril', siempre está de un humor feliz y me incentiva a seguir el camino correcto. Tiene unos valores de oro que son difíciles de encontrar en la sociedad actual y es alguien de extrema confianza. Entrena muchísimo y es súper hábil en las MMA.",
+    "phrase": "Siempre con la mejor energía y los valores firmes, hermano. Hay que hacer las cosas bien."
+  },
+  {
+    "name": "Emir",
+    "description": "Mi mejor amigo desde hace años. Actualmente estamos a distancia, pero la química y nuestro humor intacto hacen que no se note. Siempre me motiva a crecer en todos los ámbitos, a estudiar y a entrenar para ser mejor que ayer. Es re sociable, muy gracioso y un crack atacando en el fútbol, aunque para defender es un desastre.",
+    "phrase": "Dale que hoy tenés que ser mejor que ayer... ¡pero en el partido no me pidas que baje a defender!"
+  },
+  {
+    "name": "Giuli",
+    "description": "Una chica de muy buenos valores (aunque a veces un poco mentirosa y manipuladora) a la que quiero muchísimo. La conozco hace años y es muy linda. Es muy chiquita de cuerpo, pero tiene un carácter fuertísimo. Lo más curioso es que, a pesar de tener una miopía altísima, tiene una visión perfecta para diferenciar a kilómetros de qué personas debe alejarse y a quiénes cuidar en su entorno.",
+    "phrase": "Seré chiquita y no veré bien de lejos, pero a la gente de verdad la reconozco enseguida."
+  },
+  {
+    "name": "Mati",
+    "description": "Quizás la persona más honesta y buena que conozco. Es el hegemónico del grupo: alto, rubio y lindo. Tiene mucha energía femenina, le importa bastante lo que piensan los demás y tarda una eternidad en arreglarse para salir. Su indecisión es legendaria, cambia de opinión mil veces antes de confirmar algo, pero es un sabio consejero capaz de llevarse un secreto a la tumba.",
+    "phrase": "Bancame que me termino de arreglar y salimos... o capaz mejor nos quedamos, no sé, dejame pensarlo."
+  },
+  {
+    "name": "Han",
+    "description": "Una persona muy distante, cambiante y poco demostrativa. Su personalidad recuerda mucho a la de un gato: independiente y de emociones reservadas, nunca lo he visto desbordar de felicidad. Su estado ideal es disfrutar del clima frío, tomar café, leer y disfrutar de la tranquilidad en absoluta soledad.",
+    "phrase": "Dejame con mi café y mi libro. Este frío está ideal para no ver a nadie."
+  },
+  {
+    "name": "Papa",
+    "description": "Mi padre, la persona que más quiero en el planeta junto a mi mamá. Dicen que la familia no se elige, pero no imagino un padre mejor. Siempre dio todo por mí, festeja mis victorias y me sostiene en las derrotas. Es muy enojón (aunque últimamente está más calmado), súper inteligente y con una enorme rapidez para el razonamiento.",
+    "phrase": "Yo siempre te voy a apoyar en todas, pero usá la cabeza y pensá antes de actuar."
+  },
+  {
+    "name": "Anto",
+    "description": "Mi pareja. Conmigo es un amor, súper tierna y demostrativa: siempre me expresa sus sentimientos, me dice que me quiere y que me extraña. Con el resto de la gente, en cambio, es estrictamente recíproca. Le encanta jugar videojuegos, mirar series románticas y tiene una pasión especial por debatir hasta lograr que todos le den la razón.",
+    "phrase": "Te amo y te extraño un montón... pero en esta discusión tengo la razón yo."
+  },
+  {
+    "name": "Fanto",
+    "description": "Un amigo un poco raro pero el más segundero de todos. Capaz no le gusta el plan, pero acepta igual solo para pasar tiempo con sus amigos o familia. Es un poco enojón pero excelente conversando. Amante del rap, lleno de tatuajes y con mucho estilo propio. Técnicamente es un jugadorazo de fútbol, un deporte por el que dejaría absolutamente todo.",
+    "phrase": "El plan mucho no me va y ya me estoy enojando, pero voy igual. Eso sí, si hay fútbol, dejo la vida."
+  }
+]

@@ -1,5 +1,7 @@
 data/
 .git/
 .env
+.env.example
 *.md
 docker-compose.yml
+README.md

@@ -14,48 +14,18 @@ import (
 	"github.com/GastonFerrarisDavies/QueSosDeGasti-backend/internal/repository"
 )
 
-type ProfileHandler struct {
-	repo     *repository.ProfileRepository
+type MatchHandler struct {
+	repo     *repository.PersonRepository
 	embedder embeddings.Embedder
 	timeout  time.Duration
 }
 
-func NewProfileHandler(repo *repository.ProfileRepository, embedder embeddings.Embedder, timeout time.Duration) *ProfileHandler {
-	return &ProfileHandler{repo: repo, embedder: embedder, timeout: timeout}
-}
-
-// CreateProfile maneja POST /api/profiles.
-func (h *ProfileHandler) CreateProfile(c *fiber.Ctx) error {
-	var req models.CreateProfileRequest
-	if err := c.BodyParser(&req); err != nil {
-		return badRequest(c, "invalid JSON body")
-	}
-	req.Name = strings.TrimSpace(req.Name)
-	req.Description = strings.TrimSpace(req.Description)
-	if req.Name == "" || req.Description == "" {
-		return badRequest(c, "name and description are required")
-	}
-
-	ctx, cancel := context.WithTimeout(c.UserContext(), h.timeout)
-	defer cancel()
-
-	vec, err := h.embedder.Embed(ctx, req.Description)
-	if err != nil {
-		slog.Error("embedding profile", "err", err)
-		return c.Status(fiber.StatusBadGateway).JSON(models.ErrorResponse{Error: "could not generate embedding"})
-	}
-
-	profile, err := h.repo.Create(ctx, req.Name, req.Description, vec)
-	if err != nil {
-		slog.Error("saving profile", "err", err)
-		return internalError(c)
-	}
-
-	return c.Status(fiber.StatusCreated).JSON(profile)
+func NewMatchHandler(repo *repository.PersonRepository, embedder embeddings.Embedder, timeout time.Duration) *MatchHandler {
+	return &MatchHandler{repo: repo, embedder: embedder, timeout: timeout}
 }
 
 // Match maneja POST /api/test/match.
-func (h *ProfileHandler) Match(c *fiber.Ctx) error {
+func (h *MatchHandler) Match(c *fiber.Ctx) error {
 	var req models.MatchRequest
 	if err := c.BodyParser(&req); err != nil {
 		return badRequest(c, "invalid JSON body")
@@ -70,17 +40,13 @@ func (h *ProfileHandler) Match(c *fiber.Ctx) error {
 		if a == "" {
 			return badRequest(c, "answers cannot be empty")
 		}
-		if !strings.HasSuffix(a, ".") {
-			a += "."
-		}
 		answers = append(answers, a)
 	}
-	paragraph := strings.Join(answers, " ")
 
 	ctx, cancel := context.WithTimeout(c.UserContext(), h.timeout)
 	defer cancel()
 
-	vec, err := h.embedder.Embed(ctx, paragraph)
+	vec, err := h.embedder.Embed(ctx, JoinAnswers(answers))
 	if err != nil {
 		slog.Error("embedding answers", "err", err)
 		return c.Status(fiber.StatusBadGateway).JSON(models.ErrorResponse{Error: "could not generate embedding"})
@@ -91,11 +57,22 @@ func (h *ProfileHandler) Match(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusNotFound).JSON(models.ErrorResponse{Error: "no profiles loaded yet"})
 	}
 	if err != nil {
-		slog.Error("finding closest profile", "err", err)
+		slog.Error("finding closest person", "err", err)
 		return internalError(c)
 	}
 
 	return c.JSON(match)
+}
+
+// JoinAnswers arma el párrafo a vectorizar: "Respuesta 1. Respuesta 2. ... Respuesta 20."
+// Es el mismo formato que los textos de seed/profiles.json, para que los
+// vectores sean comparables.
+func JoinAnswers(answers []string) string {
+	parts := make([]string, 0, len(answers))
+	for _, a := range answers {
+		parts = append(parts, strings.TrimRight(strings.TrimSpace(a), "."))
+	}
+	return strings.Join(parts, ". ") + "."
 }
 
 func badRequest(c *fiber.Ctx, msg string) error {

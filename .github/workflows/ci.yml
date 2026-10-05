@@ -1,0 +1,124 @@
+name: CI
+
+# Testea, publica la imagen en GHCR y fija su digest en el Terraform del repo
+# de infra. Ese commit dispara el CD de infra, que la despliega en Azure.
+on:
+  push:
+    branches: [main]
+    paths-ignore:
+      - "**.md"
+      - "docker-compose.yml"
+      - ".env.example"
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  packages: write
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  INFRA_REPO: GastonFerrarisDavies/QueSosDeGasti-infra
+  TFVAR_NAME: api_image
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+      - run: go vet ./...
+      - run: go test ./...
+
+  image:
+    needs: test
+    if: github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    outputs:
+      ref: ${{ steps.ref.outputs.ref }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Image name
+        id: name
+        # GHCR exige minúsculas.
+        run: echo "image=ghcr.io/${GITHUB_REPOSITORY,,}" >> "$GITHUB_OUTPUT"
+
+      - uses: docker/setup-buildx-action@v3
+
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: docker/metadata-action@v5
+        id: meta
+        with:
+          images: ${{ steps.name.outputs.image }}
+          tags: |
+            type=sha,prefix=sha-,format=short
+            type=raw,value=latest
+
+      - uses: docker/build-push-action@v6
+        id: build
+        with:
+          context: .
+          push: true
+          platforms: linux/amd64
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Pinned reference
+        id: ref
+        run: echo "ref=${{ steps.name.outputs.image }}:sha-${GITHUB_SHA::7}@${{ steps.build.outputs.digest }}" >> "$GITHUB_OUTPUT"
+
+  update-infra:
+    needs: image
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          repository: ${{ env.INFRA_REPO }}
+          token: ${{ secrets.INFRA_REPO_TOKEN }}
+          fetch-depth: 0
+
+      - name: Bump image digest in Terraform
+        env:
+          REF: ${{ needs.image.outputs.ref }}
+          SOURCE: ${{ github.server_url }}/${{ github.repository }}/commit/${{ github.sha }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          # El CI del frontend puede empujar al mismo tiempo: si el push falla,
+          # se parte del main nuevo y se reaplica el cambio.
+          for attempt in 1 2 3 4 5; do
+            git fetch origin main
+            git reset --hard origin/main
+            sed -i -E "s|^(${TFVAR_NAME}[[:space:]]*=[[:space:]]*).*$|\1\"${REF}\"|" images.auto.tfvars
+            grep -qF "\"${REF}\"" images.auto.tfvars || { echo "No se encontró ${TFVAR_NAME} en images.auto.tfvars"; exit 1; }
+
+            if git diff --quiet; then
+              echo "El digest ya estaba fijado, nada que hacer."
+              exit 0
+            fi
+
+            git commit -am "chore(images): ${TFVAR_NAME} -> ${REF##*@}" -m "Origen: ${SOURCE}"
+            if git push origin HEAD:main; then
+              echo "### ${TFVAR_NAME} actualizado" >> "$GITHUB_STEP_SUMMARY"
+              echo "\`${REF}\`" >> "$GITHUB_STEP_SUMMARY"
+              exit 0
+            fi
+            sleep $((attempt * 5))
+          done
+          echo "No se pudo empujar al repo de infra"
+          exit 1
